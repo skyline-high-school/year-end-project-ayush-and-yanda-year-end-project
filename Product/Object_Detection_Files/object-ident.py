@@ -16,6 +16,9 @@ net.setInputScale(1.0/ 127.5)
 net.setInputMean((127.5, 127.5, 127.5))
 net.setInputSwapRB(True)
 
+mouseX = 0
+mouseY = 0
+bounds = []
 
 def getObjects(img, thres, nms, draw=True, objects=[]):
     classIds, confs, bbox = net.detect(img,confThreshold=thres,nmsThreshold=nms)
@@ -34,8 +37,52 @@ def getObjects(img, thres, nms, draw=True, objects=[]):
                     cv2.putText(img,str(round(confidence*100,2)),(box[0]+200,box[1]+30),
                     cv2.FONT_HERSHEY_COMPLEX,1,(0,255,0),2)
 
+    if mouseX != 0 and mouseY != 0:
+         font = cv2.FONT_HERSHEY_SIMPLEX 
+         print(mouseX, ' ', mouseY) 
+         cv2.putText(img, str(mouseX) + ',' +
+                            str(mouseY), (mouseX,mouseY), font, 
+                            1, (255, 0, 0), 2) 
+
     return img,objectInfo
 
+def click_event(event, x, y, flags, params): 
+  
+    # checking for left mouse clicks 
+    if event == cv2.EVENT_LBUTTONDOWN: 
+
+        # displaying the coordinates 
+        # on the Shell 
+        print(x, ' ', y) 
+        global mouseX
+        global mouseY
+        mouseX = x
+        mouseY = y
+        
+        # displaying the coordinates 
+        # on the image window 
+                # font = cv2.FONT_HERSHEY_SIMPLEX 
+                # cv2.putText(img, str(x) + ',' +
+                #             str(y), (x,y), font, 
+                #             1, (255, 0, 0), 2) 
+        
+            # checking for right mouse clicks      
+            # if event==cv2.EVENT_RBUTTONDOWN: 
+        
+            #     # displaying the coordinates 
+            #     # on the Shell 
+            #     print(x, ' ', y) 
+        
+            #     # displaying the coordinates 
+            #     # on the image window 
+            #     font = cv2.FONT_HERSHEY_SIMPLEX 
+            #     b = img[y, x, 0] 
+            #     g = img[y, x, 1] 
+            #     r = img[y, x, 2] 
+            #     cv2.putText(img, str(b) + ',' +
+            #                 str(g) + ',' + str(r), 
+            #                 (x,y), font, 1, 
+            #                 (255, 255, 0), 2) 
 
 if __name__ == "__main__":
 
@@ -43,11 +90,13 @@ if __name__ == "__main__":
     cap.set(3,640)
     cap.set(4,480)
     #cap.set(10,70)
-
+    
     while True:
         success, img = cap.read()
         result, objectInfo = getObjects(img,0.6,0.4, objects=['person'])
+
         # result, objectInfo = getObjects(img,0.6,0.4)
         #print(objectInfo)
         cv2.imshow("Output",img)
+        cv2.setMouseCallback("Output", click_event)
         cv2.waitKey(1)
