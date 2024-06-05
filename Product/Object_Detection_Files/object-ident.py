@@ -3,6 +3,7 @@ import time
 import threading
 import tkinter as tk
 from tkinter import messagebox
+from emailing import send_email_alert
 
 #thres = 0.45 # Threshold to detect object
 
@@ -144,6 +145,7 @@ def start_camera_feed():
 def send_email(seconds):
     global ready_for_email
     ready_for_email = False
+    send_email_alert(user_email, vision_target)
     print("email sent")
     time.sleep(seconds)
     ready_for_email = True
