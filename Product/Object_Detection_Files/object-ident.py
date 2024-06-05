@@ -1,5 +1,6 @@
 import cv2
 import time
+import threading
 import tkinter as tk
 from tkinter import messagebox
 
@@ -13,6 +14,7 @@ with open(classFile,"rt") as f:
 configPath = "/Users/yandabao/Documents/Git/year-end-project-ayush-and-yanda-year-end-project/Product/Object_Detection_Files/ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt"
 weightsPath = "/Users/yandabao/Documents/Git/year-end-project-ayush-and-yanda-year-end-project/Product/Object_Detection_Files/frozen_inference_graph.pb"
 
+#define our computer vision model
 net = cv2.dnn_DetectionModel(weightsPath,configPath)
 net.setInputSize(320,320)
 net.setInputScale(1.0/ 127.5)
@@ -21,7 +23,12 @@ net.setInputSwapRB(True)
 
 # mouseX = 0
 # mouseY = 0
-bounds = []
+
+#define the variables that we'll use later on while the model is running
+vision_target = None 
+user_email = None
+timeout_length = 10 #how long this program waits between sending emails
+ready_for_email = True
 
 def getObjects(img, thres, nms, draw=True, objects=[]):
     classIds, confs, bbox = net.detect(img,confThreshold=thres,nmsThreshold=nms)
@@ -35,7 +42,11 @@ def getObjects(img, thres, nms, draw=True, objects=[]):
             if className in objects:
                 objectInfo.append([box,className])
                 if (draw):
-                    cv2.rectangle(img,box,color=(0,255,0),thickness=2)
+                    desiredColor = (0, 255, 0)
+                    if(vision_target == className.lower() or vision_target == className.upper()):
+                        desiredColor = (0, 0, 255)
+                        
+                    cv2.rectangle(img,box,color=desiredColor,thickness=2)
                     cv2.putText(img,classNames[classId-1].upper(),(box[0]+10,box[1]+30),
                     cv2.FONT_HERSHEY_COMPLEX,1,(0,255,0),2)
                     cv2.putText(img,str(round(confidence*100,2)),(box[0]+200,box[1]+30),
@@ -92,11 +103,9 @@ def click_event(event, x, y, flags, params):
 
 
 # Initialize variables to store the inputs
-vision_target = None
-user_email = None
 
 def save_input():
-    global vision_target, user_email
+    global vision_target, user_email, timeout_length, ready_for_email
     vision_target = word_entry.get()
     user_email = email_entry.get()
 
@@ -120,17 +129,31 @@ def start_camera_feed():
         success, img = cap.read()
         # result, objectInfo = getObjects(img,0.6,0.4, objects=['person'])
         result, objectInfo = getObjects(img,0.6,0.4)
-        #print(objectInfo)
+
+        for pair in objectInfo:
+            if pair[1] == vision_target.lower() or pair[1] == vision_target.upper():
+                if ready_for_email:
+                    email_thread = threading.Thread(target=send_email, args=(10,))
+                    # Start the timer thread
+                    email_thread.start()
+                            
         cv2.imshow("Output",img)
         # cv2.setMouseCallback("Output", click_event)
-        cv2.waitKey(1)    
+        cv2.waitKey(1)
             
+def send_email(seconds):
+    global ready_for_email
+    ready_for_email = False
+    print("email sent")
+    time.sleep(seconds)
+    ready_for_email = True
+
 # Create the main window
 root = tk.Tk()
 root.title("Input Saver")
 
 # Create and place the word label and entry
-word_label = tk.Label(root, text="Enter a word:")
+word_label = tk.Label(root, text="Enter a vision target:")
 word_label.pack(pady=5)
 word_entry = tk.Entry(root)
 word_entry.pack(pady=5)
