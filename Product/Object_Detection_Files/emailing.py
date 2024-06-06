@@ -36,3 +36,5 @@ def send_email_alert(receiver_email, vision_target):
     finally:
         # Terminate the SMTP session
         server.quit()
+        
+# send_email_alert("yandabaodav@gmail.com", "person")
